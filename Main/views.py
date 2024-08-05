@@ -1,3 +1,5 @@
+import threading
+
 from django.shortcuts import render, redirect
 from django.views import View
 
@@ -8,12 +10,26 @@ def after_create_post(request, *args, **kwargs):
     return render(request, 'after_create_post.html')
 
 
+def post_video(title, video, code, language, country, time_of, genre, category_id, created_date, quality):
+    Post.objects.create(
+        title=title,
+        video=video,
+        code=code,
+        language=language,
+        country=country,
+        time_of=time_of,
+        genre=genre,
+        category_id=category_id,
+        created_date=created_date,
+        quality=quality,
+    )
+
 class CreatePost(View):
     def get(self, request, *args, **kwargs):
         categories = Category.objects.all()
         context = {'categories': categories}
         return render(request, 'create_post.html', context)
-    
+
     def post(self, request, *args, **kwargs):
         categories = Category.objects.all()
         context = {'categories': categories}
@@ -27,34 +43,13 @@ class CreatePost(View):
         created_date = request.POST.get('created_date')
         quality = request.POST.get('quality')
         category_id = request.POST.get('category')
-        print(title)
-        print(video)
-        print(code)
-        print(language)
-        print(country)
-        print(time_of)
-        print(genre)
-        print(category_id)
         if (title is not None and video is not None and code is not None and language is not None
             and category_id is not None and country is not None and time_of is not None
             and genre is not None and created_date is not None and quality is not None):
-            Post.objects.create(
-                title=title,
-                video=video,
-                code=code,
-                language=language,
-                country=country,
-                time_of=time_of,
-                genre=genre,
-                category_id=category_id,
-                created_date=created_date,
-                quality=quality,
-            )
-            print('################################################################\n'
-                '################################################################')
+            threading.Thread(target=post_video, args=(title, video, code, language, country, time_of,
+                                                      genre, category_id, created_date, quality)).start()
             return redirect('after_create_post')
         return render(request, 'create_post.html', context)
-
 
 
 class SignIn(View):
